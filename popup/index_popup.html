@@ -1,189 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="global.css" type="text/css" />
-    <title>Brutalist Mic UI</title>
-    <style>
-        /* Brutalist Styles */
-        :root {
-            --bg-color: #1E1E1E;
-            --text-color: #FFFFFF;
-            --border-color: #FF0000;
-            --accent-color: #39FF14; /* Neon Green */
-            --border-width: 2px;
-            --font-family: 'Courier New', ui-monospace, 'Roboto Mono', monospace;
-        }
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="global.css" />
+  </head>
 
-        body {
-            font-family: var(--font-family);
-            background-color: #0d0d0d;
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 300px;
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .brutalist-container {
-            width: 250px;
-            height: 250px;
-            background-color: var(--bg-color);
-            border: var(--border-width) solid var(--border-color);
-            box-shadow: 4px 4px 0px var(--border-color);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .brutalist-header {
-            border-bottom: var(--border-width) solid var(--border-color);
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .brutalist-title {
-            color: var(--accent-color);
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        .brutalist-close {
-            background: none;
-            border: var(--border-width) solid var(--text-color);
-            color: var(--text-color);
-            font-size: 16px;
-            font-weight: bold;
-            padding: 4px 8px;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-
-        .brutalist-close:hover {
-            background-color: var(--text-color);
-            color: var(--bg-color);
-        }
-
-        .brutalist-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .mic-button {
-            width: 100px;
-            height: 100px;
-            background-color: var(--bg-color);
-            border: var(--border-width) solid var(--text-color);
-            box-shadow: 3px 3px 0px var(--text-color);
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.1s ease-in-out;
-        }
-        .mic-button:hover {
-            background-color: var(--text-color);
-            box-shadow: 1px 1px 0px var(--text-color);
-        }
-        .mic-button:active {
-            box-shadow: none;
-            transform: translate(3px, 3px);
-        }
-        .mic-button svg {
-            fill: var(--text-color);
-            transition: fill 0.1s ease-in-out;
-        }
-        .mic-button:hover svg {
-            fill: var(--bg-color);
-        }
-        .mic-button.recording {
-            border-color: var(--accent-color);
-            box-shadow: 3px 3px 0px var(--accent-color);
-            background-color: var(--accent-color);
-        }
-        .mic-button.recording svg {
-            fill: var(--bg-color);
-        }
-        .status-message {
-            text-transform: uppercase;
-            color: var(--text-color);
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-
-<div class="main-action-container">
-    <button class="toggle-btn" id="toggleBtn">Vision Pair</button>
-</div>
-
-<div class="brutalist-container hidden" id="extensionUI">
-    <div class="brutalist-header">
-        <span class="brutalist-title">RECORDING UNIT</span>
-        <button class="brutalist-close" id="closeBtn">X</button>
+  <body>
+    <div id="popup-content">
+      <h1>VisPair</h1>
+      <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v3a5.006 5.006 0 0 1-5 5h-4a5.006 5.006 0 0 1-5-5V9m7 9v3m-3 0h6M11 3h2a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"/>
+      </svg>
+      <div id="speechtext"><span id="STT">Test : How to make pancakes</span></div>
+      <div id="btn_div">
+        <input type="button" value="SEARCH"/>
+        <input type="button" value="OPEN"/>
+        <input type="button" value="PROCEDURE"/>
+      </div>
     </div>
-    <div class="brutalist-content">
-        <button class="mic-button" id="micBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24">
-                <path d="M12 14c-1.66 0-3-1.34-3-3V5c0-1.66 1.34-3 3-3s3 1.34 3 3v6c0 1.66-1.34 3-3 3zm5.4-2h-1.8c0 3.19-2.61 5.6-5.4 5.6-3.19 0-5.61-2.4-5.61-5.6H5.4c0 3.63 3.2 6.6 7 6.6s7-2.97 7-6.6zM12 19.8c-2.07 0-3.75-1.68-3.75-3.75h-1.5c0 2.95 2.12 5.41 5 5.92V24h1.5v-2.03c2.88-.51 5-2.97 5-5.92h-1.5c0 2.07-1.68 3.75-3.75 3.75z"/>
-            </svg>
-        </button>
-        <div class="status-message" id="statusMessage">READY</div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const extensionUI = document.getElementById('extensionUI');
-        const toggleBtn = document.getElementById('toggleBtn');
-        const closeBtn = document.getElementById('closeBtn');
-        const micBtn = document.getElementById('micBtn');
-        const statusMessage = document.getElementById('statusMessage');
-
-        let isRecording = false;
-
-        // Toggle UI visibility
-        toggleBtn.addEventListener('click', () => {
-            extensionUI.classList.toggle('hidden');
-        });
-
-        // Close button functionality
-        closeBtn.addEventListener('click', () => {
-            extensionUI.classList.add('hidden');
-            // Ensure status resets when closing
-            if (isRecording) {
-                isRecording = false;
-                micBtn.classList.remove('recording');
-                statusMessage.textContent = 'READY';
-            }
-        });
-
-        // Mic button functionality
-        micBtn.addEventListener('click', () => {
-            isRecording = !isRecording;
-            if (isRecording) {
-                micBtn.classList.add('recording');
-                statusMessage.textContent = 'RECORDING...';
-            } else {
-                micBtn.classList.remove('recording');
-                statusMessage.textContent = 'STOPPED';
-                setTimeout(() => {
-                    statusMessage.textContent = 'READY';
-                }, 1000);
-            }
-        });
-    });
-</script>
-
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
