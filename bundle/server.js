@@ -116,50 +116,82 @@ app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
  * Content-Type: application/json
  * Body: { "prompt": "Your text prompt here" }
  */
+
 app.post('/generate-json', async (req, res) => {
     console.log('Received request for /generate-json');
 
     try {
-        const { prompt } = req.body;
+        const { prompt, html } = req.body;
 
-        // Validate that a prompt was provided
         if (!prompt) {
             return res.status(400).json({ error: 'Text prompt is required.' });
         }
 
-        // Define the JSON schema for the desired output format, to be fixed later
+     
         const generationConfig = {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: "OBJECT",
-                properties: {
-                    recipeName: { type: "STRING", description: "The name of the recipe." },
-                    ingredients: {
-                        type: "ARRAY",
-                        items: { type: "STRING" },
-                        description: "A list of ingredients for the recipe."
-                    },
-                    servings: { type: "NUMBER", description: "The number of servings."}
-                },
-                required: ["recipeName", "ingredients"]
+  responseMimeType: "application/json",
+  responseSchema: {
+    type: "OBJECT",
+    description: "Mapping of indices 0..14 to UI elements.",
+    properties: Object.fromEntries(
+      Array.from({ length: 15 }, (_, i) => [
+        String(i),
+        {
+          type: "OBJECT",
+          properties: {
+            type: {
+              type: "STRING",
+              enum: ["button", "link", "text", "input"],
+              description: "The type of element."
             },
-        };
-        
-        const model = genAI.getGenerativeModel({ model: MODEL_NAME, safetySettings, generationConfig });
-        
-        const result = await model.generateContent(prompt);
+            description: {
+              type: "STRING",
+              description: "Short and concise description."
+            },
+            additionalInfo: {
+              type: "STRING",
+              description: "Optional extra info."
+            }
+          },
+          required: ["type", "description"]
+        }
+      ])
+    )
+  }
+};
+
+
+
+
+        const model = genAI.getGenerativeModel({
+            model: MODEL_NAME,
+            safetySettings,
+            generationConfig
+        });
+
+        const result = await model.generateContent(prompt + "html code" + "\n\n\n" + html);
         const response = result.response;
 
-        const jsonResponse = JSON.parse(response.text());
+        let jsonResponse = JSON.parse(response.text());
 
-        console.log('Successfully generated JSON from text. Sending response.');
+        // Extra safeguard: trim to 15 entries
+        const keys = Object.keys(jsonResponse);
+        if (keys.length > 15) {
+            jsonResponse = Object.fromEntries(
+                keys.slice(0, 15).map(k => [k, jsonResponse[k]])
+            );
+        }
+
+        console.log('Successfully generated indexed JSON. Sending response.');
         res.status(200).json(jsonResponse);
 
     } catch (error) {
         console.error('Error in /generate-json:', error);
         res.status(500).json({ error: 'Failed to generate JSON.', details: error.message });
     }
-});
+}
+);
+
 
 
 app.listen(PORT, () => {
