@@ -167,7 +167,7 @@ app.post('/generate-json', async (req, res) => {
  * 3. JSON-to-text-to-speech Generation Endpoint
  * This endpoint accepts a JSON with prompt and returns a readable format text
  * which is then converted to speech.
- * * Route: POST /generate-speech
+ * * Route: POST /generate-JSON-speech
  * Content-Type: .wav
  * Body: { "prompt": "Your text prompt here" }
  */
@@ -194,23 +194,33 @@ async function saveWaveFile(filename, pcmData, channels = 1, rate = 24000, sampl
   });
 }
 
-app.post('/generate-speech', async (req, res) => {
+app.post('/generate-JSON-speech', async (req, res) => {
   try {
     const { jsonData } = req.body;
     if (!jsonData) {
       return res.status(400).json({ error: 'JSON data is required.' });
     }
 
-    const prompt = `You are an assistant that converts structured JSON data into a natural, human-readable description.
-                    Please read the following JSON as a normal person would:
-                    ${JSON.stringify(jsonData, null, 2)}`;
+    // Prepare prompt wrapped as contents as expected by GoogleGenAI API
+    const promptContent = [
+      {
+        parts: [
+          {
+            text: `You are an assistant that converts structured JSON data into a natural, human-readable description.
+Please read the following JSON as a normal person would:
+${JSON.stringify(jsonData, null, 2)}`
+          }
+        ]
+      }
+    ];
 
     // Step 1: Generate natural language text from JSON
     const transcriptResult = await genAI.models.generateContent({
       model: MODEL_NAME,
-      contents: prompt,
+      contents: promptContent,
       safetySettings,
     });
+    
     const transcriptText = transcriptResult.response.text();
 
     // Step 2: Generate TTS audio from the natural text
@@ -231,7 +241,14 @@ app.post('/generate-speech', async (req, res) => {
       },
     };
 
-    const ttsResult = await ttsModel.generateContent(transcriptText, { config: ttsConfig });
+    const ttsResult = await ttsModel.generateContent(
+      [
+        {
+          parts: [{ text: transcriptText }]
+        }
+      ],
+      { config: ttsConfig }
+    );
 
     const base64Audio = ttsResult.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
@@ -250,12 +267,59 @@ app.post('/generate-speech', async (req, res) => {
 
     res.status(200).json({ message: 'Speech audio generated and saved.', file: outputFileName });
   } catch (error) {
-    console.error('Error in /generate-speech:', error);
+    console.error('Error in /generate-JSON-speech:', error);
     res.status(500).json({ error: 'Failed to generate or save speech.', details: error.message });
   }
 });
 
 
+
+/**
+ * 4. text-to-speech Generation Endpoint
+ * This endpoint accepts a text
+ * Which is then converted to speech.
+ * * Route: POST /generate-speech
+ * Content-Type: .wav
+ */
+
+app.post('/generate-tts', async (req, res) => {
+  try {
+    const textToSpeak = req.body.text || 'Say cheerfully: Have a wonderful day!';
+
+    const ai = new GoogleGenAI({});
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text: textToSpeak }] }],
+      config: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
+          },
+        },
+      },
+    });
+
+    const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+    if (!data) {
+      return res.status(500).json({ error: 'No audio data returned from model.' });
+    }
+
+    const audioBuffer = Buffer.from(data, 'base64');
+
+    const fileName = path.join(__dirname, 'out.wav');
+    await saveWaveFile(fileName, audioBuffer);
+
+    // Respond with success and path to saved WAV file
+    res.status(200).json({ message: 'Audio generated successfully.', file: 'out.wav' });
+
+  } catch (error) {
+    console.error('Error in /generate-tts:', error);
+    res.status(500).json({ error: 'Failed to generate audio.', details: error.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
