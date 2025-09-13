@@ -14,7 +14,7 @@ window.addEventListener("DOMContentLoaded", () => {
    * @returns {Promise<object>} A promise that resolves with the JSON analysis result.
    */
   async function analyzeAudio(audioFile) {
-    // The URL of your backend endpoint
+    // Backend Endpoint URL
     const apiUrl = "http://localhost:3000/analyze-audio";
     const formData = new FormData();
     formData.append("audio", audioFile);
@@ -48,38 +48,29 @@ window.addEventListener("DOMContentLoaded", () => {
       // Initialize MediaRecorder
       mediaRecorder = new MediaRecorder(stream);
 
-      // This event fires when data is available to be collected
       mediaRecorder.ondataavailable = (event) => {
         audioChunks.push(event.data);
       };
 
-      // This event fires when recording is stopped
       mediaRecorder.onstop = async () => {
         // Combine all collected audio chunks into a single Blob
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        // Create a File object to send to the backend
         const audioFile = new File([audioBlob], "recording.webm", {
           type: "audio/webm",
         });
 
-        // Reset the chunks array for the next recording
         audioChunks = [];
 
-        // --- Send to backend and log result ---
         try {
-          // Update UI to show analysis is in progress
           recordingStatus.textContent = "Analyzing audio...";
           console.log("Recording stopped. Sending audio to backend...");
 
-          // Call the API function
           const result = await analyzeAudio(audioFile);
 
-          // Log the final result from the backend to the console
           console.log("--- Gemini Analysis Result ---");
           console.log(result);
           console.log("------------------------------");
 
-          // Update UI to confirm completion
           recordingStatus.textContent =
             "Analysis complete. Output is in the console.";
         } catch (error) {
@@ -88,7 +79,6 @@ window.addEventListener("DOMContentLoaded", () => {
         }
       };
 
-      // Start recording
       mediaRecorder.start();
 
       // Update UI to reflect recording state
@@ -104,12 +94,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // --- Event Listener for Stop Button ---
   stopButton.addEventListener("click", () => {
-    // Check if the mediaRecorder is active and recording
     if (mediaRecorder && mediaRecorder.state === "recording") {
       mediaRecorder.stop();
-
-      // Update UI to reflect stopped state
-      // The onstop event handler will update the status further.
       recordingStatus.textContent = "Stopping recording...";
       recordButton.disabled = false;
       stopButton.disabled = true;

@@ -127,7 +127,7 @@ app.post('/generate-json', async (req, res) => {
             return res.status(400).json({ error: 'Text prompt is required.' });
         }
 
-        // Define the JSON schema for the desired output format, change it later as for your needs
+        // Define the JSON schema for the desired output format, to be fixed later
         const generationConfig = {
             responseMimeType: "application/json",
             responseSchema: {
@@ -150,8 +150,7 @@ app.post('/generate-json', async (req, res) => {
         const result = await model.generateContent(prompt);
         const response = result.response;
 
-        const jsonResponse = JSON.parse(
-          // --- Start Server ---response.text());
+        const jsonResponse = JSON.parse(response.text());
 
         console.log('Successfully generated JSON from text. Sending response.');
         res.status(200).json(jsonResponse);
