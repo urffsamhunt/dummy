@@ -66,17 +66,17 @@ app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
     responseSchema: {
       type: "OBJECT",
       properties: {
-        procedure: {
+        key: {
           type: "STRING",
           enum: ["search", "back", "forward", "summarize"],
           description: "The classified browsing command from the audio.",
         },
         value: {
           type: "STRING",
-          description: "The query or target for the procedure (e.g., the search term). Can be empty for commands like 'back' or 'forward'.",
+          description: "The query or target for the procedure",
         },
       },
-      required: ["procedure"],
+      required: ["key", "value"],
     },
   };
 
