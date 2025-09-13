@@ -1,5 +1,5 @@
-browser.commands.onCommand.addListener((command) => {
-  if (command === "open-popup") {
-    browser.action.openPopup();
-  }
+browser.browserAction.onClicked.addListener(() => {
+  browser.tabs.create({
+    url: browser.runtime.getURL("popup/index_popup.html")
+  });
 });
