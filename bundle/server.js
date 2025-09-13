@@ -5,35 +5,26 @@ const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@googl
 const dotenv = require('dotenv');
 const cors = require('cors');
 
-// Load environment variables from .env file
 dotenv.config();
 
-// --- Configuration ---
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.GEMINI_API_KEY;
-// Using a versatile model. For audio-specific tasks, you might switch to a model fine-tuned for it once available.
 const MODEL_NAME = 'gemini-2.5-flash-lite'; 
 
-// --- Initialize Express App ---
 const app = express();
-// Enable Cross-Origin Resource Sharing (CORS) for all routes
 app.use(cors());
-// Parse JSON bodies from incoming requests
 app.use(express.json());
 
-// --- Configure Multer for Audio File Uploads ---
 // Using memory storage to handle the file as a buffer
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// --- Initialize Google Generative AI Client ---
+// Initialize Google Generative AI Client
 if (!API_KEY) {
   throw new Error("GEMINI_API_KEY is not defined in the environment variables.");
 }
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// --- Safety Settings for the Model ---
-// Configure safety settings to block harmful content at a low threshold
 const safetySettings = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
   { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
@@ -58,12 +49,11 @@ app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
   console.log('Received request for /analyze-audio');
 
   try {
-    // Validate that an audio file was uploaded
     if (!req.file) {
       return res.status(400).json({ error: 'No audio file uploaded.' });
     }
 
-    // A system instruction to guide the model's behavior
+    // A system instruction for sentiment analysis and modelling
     const systemInstruction = {
       parts: [{ text: "You are an expert audio analyst and browsing assistant. Your task is to analyze the user's web browsing query and classify it into certain enumerated procedures. The enums are : search, back, forward, summarize. The response should be a JSON object with the key being the procedure name and result being the value." }],
       role: "model"
@@ -92,7 +82,6 @@ app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
 
     const model = genAI.getGenerativeModel({ model: MODEL_NAME, systemInstruction, safetySettings, generationConfig });
     
-    // Convert the audio buffer to a base64 string for the API
     const audio_parts = [
         {
             inlineData: {
@@ -107,8 +96,6 @@ app.post('/analyze-audio', upload.single('audio'), async (req, res) => {
     const result = await model.generateContent([userPrompt, ...audio_parts]);
     const response = result.response;
     
-    // The response from the model should already be a JSON string
-    // We parse it to send it as a JSON object
     const jsonResponse = JSON.parse(response.text());
     
     console.log('Successfully analyzed audio. Sending response.');
@@ -140,7 +127,7 @@ app.post('/generate-json', async (req, res) => {
             return res.status(400).json({ error: 'Text prompt is required.' });
         }
 
-        // Define the JSON schema for the desired output format
+        // Define the JSON schema for the desired output format, change it later as for your needs
         const generationConfig = {
             responseMimeType: "application/json",
             responseSchema: {
@@ -163,7 +150,8 @@ app.post('/generate-json', async (req, res) => {
         const result = await model.generateContent(prompt);
         const response = result.response;
 
-        const jsonResponse = JSON.parse(response.text());
+        const jsonResponse = JSON.parse(
+          // --- Start Server ---response.text());
 
         console.log('Successfully generated JSON from text. Sending response.');
         res.status(200).json(jsonResponse);
@@ -175,7 +163,6 @@ app.post('/generate-json', async (req, res) => {
 });
 
 
-// --- Start Server ---
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
