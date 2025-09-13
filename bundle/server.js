@@ -10,6 +10,7 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.GEMINI_API_KEY;
 const MODEL_NAME = 'gemini-2.5-flash-lite'; 
+const MODEL2_NAME = 'gemini-2.5-flash-preview-tts';
 
 const app = express();
 app.use(cors());
@@ -160,6 +161,100 @@ app.post('/generate-json', async (req, res) => {
         res.status(500).json({ error: 'Failed to generate JSON.', details: error.message });
     }
 });
+
+
+/**
+ * 3. JSON-to-text-to-speech Generation Endpoint
+ * This endpoint accepts a JSON with prompt and returns a readable format text
+ * which is then converted to speech.
+ * * Route: POST /generate-speech
+ * Content-Type: .wav
+ * Body: { "prompt": "Your text prompt here" }
+ */
+
+const fs = require('fs');
+const path = require('path');
+const wav = require('wav');
+
+// Function to save WAV file from PCM data buffer
+async function saveWaveFile(filename, pcmData, channels = 1, rate = 24000, sampleWidth = 2) {
+  return new Promise((resolve, reject) => {
+    const filePath = path.resolve(__dirname, filename);
+    const writer = new wav.FileWriter(filePath, {
+      channels,
+      sampleRate: rate,
+      bitDepth: sampleWidth * 8,
+    });
+
+    writer.on('finish', () => resolve(filePath));
+    writer.on('error', reject);
+
+    writer.write(pcmData);
+    writer.end();
+  });
+}
+
+app.post('/generate-speech', async (req, res) => {
+  try {
+    const { jsonData } = req.body;
+    if (!jsonData) {
+      return res.status(400).json({ error: 'JSON data is required.' });
+    }
+
+    const prompt = `You are an assistant that converts structured JSON data into a natural, human-readable description.
+                    Please read the following JSON as a normal person would:
+                    ${JSON.stringify(jsonData, null, 2)}`;
+
+    // Step 1: Generate natural language text from JSON
+    const transcriptResult = await genAI.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt,
+      safetySettings,
+    });
+    const transcriptText = transcriptResult.response.text();
+
+    // Step 2: Generate TTS audio from the natural text
+    const ttsModel = genAI.getGenerativeModel({
+      model: MODEL2_NAME,
+      safetySettings,
+      generationConfig: {
+        responseMimeType: 'audio/wav',
+      },
+    });
+
+    const ttsConfig = {
+      responseModalities: ['AUDIO'],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: 'Zephyr' },
+        },
+      },
+    };
+
+    const ttsResult = await ttsModel.generateContent(transcriptText, { config: ttsConfig });
+
+    const base64Audio = ttsResult.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+    if (!base64Audio) {
+      return res.status(500).json({ error: 'No audio data received from TTS model.' });
+    }
+
+    const audioBuffer = Buffer.from(base64Audio, 'base64');
+
+    // Save WAV file directly (assuming audioBuffer is WAV data)
+    const outputFileName = 'output_audio.wav';
+    const outputPath = path.resolve(__dirname, outputFileName);
+    await fs.promises.writeFile(outputPath, audioBuffer);
+
+    console.log(`Audio saved to ${outputPath}`);
+
+    res.status(200).json({ message: 'Speech audio generated and saved.', file: outputFileName });
+  } catch (error) {
+    console.error('Error in /generate-speech:', error);
+    res.status(500).json({ error: 'Failed to generate or save speech.', details: error.message });
+  }
+});
+
 
 
 app.listen(PORT, () => {
