@@ -1,6 +1,5 @@
 // Listens for messages from the background script.
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Executing command:", command);
     // Handles the request for HTML from the background script.
     if (message.action === "getPageHtml") {
         console.log("Background script requested HTML. Sending it now.");
@@ -16,7 +15,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         executeCommand(message.value);
         return;
     }
-
     // Handles the commands to be executed
     if (message.key) {
         console.log("Received AI command to execute:", message);
