@@ -62,6 +62,7 @@ function parseAndSanitizePage(dommy) {
 //Procedure S
 function executeCommand(command) {
     console.log("Executing command:", command);
+    document.getElementById("STT").innerText = JSON.stringify(value);
     const { key, value } = command;
     switch (key) {
         case 'click': handleClick(value); break;
