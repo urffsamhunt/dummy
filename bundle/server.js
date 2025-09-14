@@ -14,7 +14,7 @@ const MODEL2_NAME = 'gemini-2.5-flash-preview-tts';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));// Increase payload limit for HTML context
 
 // Using memory storage to handle the file as a buffer
 const storage = multer.memoryStorage();
@@ -193,6 +193,99 @@ app.post('/generate-json', async (req, res) => {
 }
 );
 
+// --- NEW AMBIGUITY HANDLING ENDPOINT ---
+
+/**
+ * Endpoint for Command Processing
+ * This endpoint accepts a user's text prompt and the sanitized HTML of the current page.
+ * It intelligently decides whether the command is clear, ambiguous but resolvable,
+ * or ambiguous and requires a clarifying question for the user.
+ * * Route: POST /process-command
+ * Content-Type: application/json
+ * Body: { "userPrompt": "text of user's command", "pageHtmlContext": "sanitized html string" }
+ */
+app.post('/process-command', async (req, res) => {
+    console.log('Received request for /process-command');
+    try {
+        const { userPrompt, pageHtmlContext } = req.body;
+
+        if (!userPrompt || !pageHtmlContext) {
+            return res.status(400).json({ error: 'User prompt and page HTML context are required.' });
+        }
+
+        const generationConfig = {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "OBJECT",
+                properties: {
+                    type: {
+                        type: "STRING",
+                        enum: ["action", "clarification"],
+                    },
+                    command: {
+                        type: "OBJECT",
+                        properties: {
+                            key: {
+                                type: "STRING",
+                                enum: ["click", "hover", "input", "back", "forward", "search", "bookmark"],
+                            },
+                            value: {
+                                type: "ANY" // Value can be a string, array, or object depending on the key
+                            },
+                        },
+                    },
+                    question: {
+                        type: "STRING",
+                    },
+                },
+                required: ["type"],
+            },
+        };
+        
+        const model = genAI.getGenerativeModel({ model: MODEL_NAME, safetySettings, generationConfig });
+        
+        // This is the core prompt that instructs the AI on how to handle ambiguity.
+        const instructionPrompt = `
+You are an AI assistant for a browser extension for visually impaired users. Your goal is to translate a user's voice command into a precise action or, if the command is ambiguous, a clarifying question. You will be given the user's command and the sanitized HTML of the current webpage.
+
+Analyze the user's command based on the provided HTML context and respond in one of two JSON formats:
+
+1.  If the command is clear OR if it is ambiguous but you can resolve it using the HTML context (e.g., user says "click the first video" and you can identify it), respond with an "action" object.
+    - For actions like 'click', 'hover', or 'input', use the exact text from the HTML element as the target.
+    - The format is: {"type": "action", "command": {"key": "...", "value": ...}}
+    
+    Examples:
+    - User says: "search for funny cat videos" -> {"type": "action", "command": {"key": "search", "value": "funny cat videos"}}
+    - User says: "click on the contact us button" -> {"type": "action", "command": {"key": "click", "value": {"text": "Contact Us"}}}
+    - User says: "type hello world into the username field" -> {"type": "action", "command": {"key": "input", "value": ["hello world", {"text": "username"}]}}
+
+2.  If the command is ambiguous and you CANNOT resolve it with the given HTML (e.g., user says "click the link" and there are many links), you MUST ask a clarifying question. Do not try to guess.
+    - The format is: {"type": "clarification", "question": "Your question to the user."}
+
+    Example:
+    - User says: "click the button" and the HTML contains "Login", "Sign Up", and "Learn More" buttons.
+    - Your response: {"type": "clarification", "question": "I see a few buttons: Login, Sign Up, and Learn More. Which one would you like me to click?"}
+
+---
+USER COMMAND: "${userPrompt}"
+
+PAGE HTML CONTEXT:
+${pageHtmlContext}
+---
+        `;
+
+        const result = await model.generateContent(instructionPrompt);
+        const response = result.response;
+        const jsonResponse = JSON.parse(response.text());
+
+        console.log('Successfully processed command. Sending response:', jsonResponse);
+        res.status(200).json(jsonResponse);
+
+    } catch (error) {
+        console.error('Error in /process-command:', error);
+        res.status(500).json({ error: 'Failed to process command.', details: error.message });
+    }
+});
 
 
 /**

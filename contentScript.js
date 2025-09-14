@@ -1,5 +1,14 @@
 // Listens for messages from the background script.
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+<<<<<<< HEAD
+    // Handles the request for SANITIZED HTML from the background script.
+    if (message.action === "getSanitizedPageHtml") {
+        console.log("Background script requested sanitized HTML. Sanitizing and Sending it now.");
+        const sanitizedHtml = parseAndSanitizePage(document.body);
+        sendResponse({ html: sanitizedHtml });
+        return true; // Required for asynchronous response.
+    }
+=======
   // Handles the request for HTML from the background script.
   if (message.action === "getPageHtml") {
     console.log("Background script requested HTML. Sending it now.");
@@ -7,6 +16,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     parseAndSanitize(document);
     return true; // Required for asynchronous responses.
   }
+>>>>>>> 70e1aab686b724bb60b57e04dbf22a2ca9be0c47
 
   if (message.key === "ai_result" && message.value) {
     console.log(
@@ -40,6 +50,10 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
+<<<<<<< HEAD
+/*
+=======
+>>>>>>> 70e1aab686b724bb60b57e04dbf22a2ca9be0c47
 function parseAndSanitize(dom) {
     // Select all <a> elements that have an <h3> as a direct child
     const nodes = dom.querySelectorAll('a:has(> h3)');
@@ -50,6 +64,37 @@ function parseAndSanitize(dom) {
     });
 
     return htmlString; // optionally return the concatenated HTML string
+}
+*/ 
+
+/**
+ * Sanitizes the page's body to create a clean, simple HTML string for the AI.
+ * This focuses on interactive elements and text content, removing clutter.
+ * @param {HTMLElement} body - The document.body element.
+ * @returns {string} - A simplified HTML string representing the page content.
+ */
+function parseAndSanitizePage(body) {
+    if (!body) return "";
+    
+    // Create a clone of the body to avoid modifying the actual page.
+    const clone = body.cloneNode(true);
+
+    // Remove tags that are usually irrelevant for navigation and clutter the context.
+    const tagsToRemove = ['script', 'style', 'noscript', 'iframe', 'svg', 'header', 'footer', 'nav', 'img', 'link', 'meta'];
+    clone.querySelectorAll(tagsToRemove.join(',')).forEach(el => el.remove());
+    
+    // Remove hidden elements
+    clone.querySelectorAll('[style*="display: none"], [hidden]').forEach(el => el.remove());
+
+    // Reduce long text to avoid exceeding token limits
+    clone.querySelectorAll('p, div, span').forEach(el => {
+        if (el.textContent.length > 200) {
+            el.textContent = el.textContent.substring(0, 200) + '...';
+        }
+    });
+
+    // Return the cleaned HTML as a string
+    return clone.innerHTML.replace(/\s{2,}/g, ' ').trim(); // Collapse whitespace
 }
 
 function parseAndSanitizePage(dommy) {
@@ -93,6 +138,19 @@ function executeCommand(command) {
 
 // --- Helper Functions to Find Elements on the Page ---
 function findElementByText(text) {
+<<<<<<< HEAD
+    if (!text) return null;
+    const lowerCaseText = text.trim().toLowerCase();
+    const candidates = document.querySelectorAll('a, button, [role="button"], [role="link"], input[type="submit"]');
+    // Find the best match, preferring exact matches
+    let bestMatch = null;
+    for (const el of Array.from(candidates)) {
+        const elText = el.textContent.trim().toLowerCase();
+        if (elText === lowerCaseText) return el; // Exact match found
+        if (elText.includes(lowerCaseText)) bestMatch = el; // Partial match
+    }
+    return bestMatch;
+=======
   if (!text) return null;
   const lowerCaseText = text.trim().toLowerCase();
   const candidates = document.querySelectorAll(
@@ -101,6 +159,7 @@ function findElementByText(text) {
   return Array.from(candidates).find((el) =>
     el.textContent.trim().toLowerCase().includes(lowerCaseText)
   );
+>>>>>>> 70e1aab686b724bb60b57e04dbf22a2ca9be0c47
 }
 
 function findElementForInput(labelText) {
@@ -112,8 +171,13 @@ function findElementForInput(labelText) {
       if (inputId) return document.getElementById(inputId);
       return label.querySelector("input, textarea, select");
     }
+<<<<<<< HEAD
+    // Fallback for inputs without labels
+    return document.querySelector(`[aria-label*="${labelText}" i], [placeholder*="${labelText}" i]`);
+=======
   }
   return null;
+>>>>>>> 70e1aab686b724bb60b57e04dbf22a2ca9be0c47
 }
 
 //Procedure Execution
