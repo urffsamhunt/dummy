@@ -84,7 +84,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // --- Event Listener for Ctrl+B to start recording or stop recording ---
   document.addEventListener("keydown", async (event) => {
-    if (event.code === "KeyB" && (event.ctrlKey || event.metaKey)) {
+    if (event.code === "Space" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
 
       if (mediaRecorder && mediaRecorder.state === "recording") {
