@@ -3,7 +3,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handles the request for HTML from the background script.
     if (message.action === "getPageHtml") {
         console.log("Background script requested HTML. Sending it now.");
-        sendResponse({ html: document.documentElement.outerHTML });
+        sendResponse({ html: document });
         return true; // Required for asynchronous responses.
     }
 
