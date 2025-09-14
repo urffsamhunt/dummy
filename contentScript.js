@@ -87,7 +87,14 @@ function findElementByText(text) {
     if (!text) return null;
     const lowerCaseText = text.trim().toLowerCase();
     const candidates = document.querySelectorAll('a, button, [role="button"], [role="link"], input[type="submit"]');
-    return Array.from(candidates).find(el => el.textContent.trim().toLowerCase().includes(lowerCaseText));
+    // Find the best match, preferring exact matches
+    let bestMatch = null;
+    for (const el of Array.from(candidates)) {
+        const elText = el.textContent.trim().toLowerCase();
+        if (elText === lowerCaseText) return el; // Exact match found
+        if (elText.includes(lowerCaseText)) bestMatch = el; // Partial match
+    }
+    return bestMatch;
 }
 
 function findElementForInput(labelText) {
@@ -100,7 +107,8 @@ function findElementForInput(labelText) {
             return label.querySelector('input, textarea, select');
         }
     }
-    return null;
+    // Fallback for inputs without labels
+    return document.querySelector(`[aria-label*="${labelText}" i], [placeholder*="${labelText}" i]`);
 }
 
 //Procedure Execution
