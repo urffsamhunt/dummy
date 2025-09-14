@@ -1,11 +1,11 @@
 // Listens for messages from the background script.
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    // Handles the request for HTML from the background script.
-    if (message.action === "getPageHtml") {
-        console.log("Background script requested HTML. Sending it now.");
-        sendResponse({ html: document });
-        parseAndSanitize(document);
-        return true; // Required for asynchronous responses.
+    // Handles the request for SANITIZED HTML from the background script.
+    if (message.action === "getSanitizedPageHtml") {
+        console.log("Background script requested sanitized HTML. Sanitizing and Sending it now.");
+        const sanitizedHtml = parseAndSanitizePage(document.body);
+        sendResponse({ html: sanitizedHtml });
+        return true; // Required for asynchronous response.
     }
 
     // If the popup wrapped the backend result as { key: 'ai_result', value: result }
