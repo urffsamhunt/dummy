@@ -7,7 +7,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         parseAndSanitize(document);
         return true; // Required for asynchronous responses.
     }
-    
+
     // If the popup wrapped the backend result as { key: 'ai_result', value: result }
     // then execute the inner result as a command object.
     if (message.key === 'ai_result' && message.value) {
@@ -24,17 +24,17 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 function parseAndSanitize(dom) {
-    const mainContentDiv = dom.getElementById('rso');
-    const nodes = mainContentDiv.querySelectorAll(".V9tjod");
-    nodes.forEach(node => {
-        const imgs = node.querySelectorAll('img');
-        imgs.forEach(img => img.remove());
-    });
-    let htmlString = '';
-    nodes.forEach(node => {
-        htmlString += node.outerHTML;
-    });
+  // Select all <a> elements that have an <h3> as a direct child
+  const nodes = dom.querySelectorAll('a:has(> h3)');
+
+  let htmlString = '';
+  nodes.forEach(node => {
+    htmlString += node.outerHTML;
+  });
+
+  return htmlString; // optionally return the concatenated HTML string
 }
+
 //Procedure S
 function executeCommand(command) {
     console.log("Executing command:", command);
