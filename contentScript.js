@@ -1,6 +1,5 @@
 // Listens for messages from the background script.
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Executing command:", command);
     // Handles the request for HTML from the background script.
     if (message.action === "getPageHtml") {
         console.log("Background script requested HTML. Sending it now.");
@@ -8,7 +7,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         parseAndSanitize(document);
         return true; // Required for asynchronous responses.
     }
-
+    
     // If the popup wrapped the backend result as { key: 'ai_result', value: result }
     // then execute the inner result as a command object.
     if (message.key === 'ai_result' && message.value) {
@@ -16,7 +15,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         executeCommand(message.value);
         return;
     }
-
     // Handles the commands to be executed
     if (message.key) {
         console.log("Received AI command to execute:", message);
@@ -26,7 +24,6 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 function parseAndSanitize(dom) {
-
     const mainContentDiv = dom.getElementById('rso');
     const nodes = mainContentDiv.querySelectorAll(".V9tjod");
     nodes.forEach(node => {
@@ -37,9 +34,6 @@ function parseAndSanitize(dom) {
     nodes.forEach(node => {
         htmlString += node.outerHTML;
     });
-
-
-
 }
 //Procedure S
 function executeCommand(command) {

@@ -41,7 +41,7 @@ window.addEventListener("DOMContentLoaded", () => {
         console.log(browser.tabs);
 
         // Send the message to the first tab in the array (the active tab).
-        return window.browser.tabs.sendMessage(tabs[0].id, message);
+        return browser.tabs.sendMessage(tabs[0].id, message );
       })
       .then((response) => {
         // This block runs if the content script sent a response back.
