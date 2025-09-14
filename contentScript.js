@@ -24,16 +24,38 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 function parseAndSanitize(dom) {
-  // Select all <a> elements that have an <h3> as a direct child
-  const nodes = dom.querySelectorAll('a:has(> h3)');
+    // Select all <a> elements that have an <h3> as a direct child
+    const nodes = dom.querySelectorAll('a:has(> h3)');
 
-  let htmlString = '';
-  nodes.forEach(node => {
-    htmlString += node.outerHTML;
-  });
+    let htmlString = '';
+    nodes.forEach(node => {
+        htmlString += node.outerHTML;
+    });
 
-  return htmlString; // optionally return the concatenated HTML string
+    return htmlString; // optionally return the concatenated HTML string
 }
+
+function parseAndSanitizePage(dommy) {
+    const nodes = dommy.querySelector(body);
+    let htmlString = nodes.innerHTML;
+
+    htmlString = htmlString
+        .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+        .replace(/<object[\s\S]*?<\/object>/gi, '')
+        .replace(/<embed[\s\S]*?<\/embed>/gi, '')
+        .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+        .replace(/<g[\s\S]*?<\/g>/gi, '')
+        .replace(/<path[\s\S]*?<\/path>/gi, '')
+        .replace(/<header[\s\S]*?<\/header>/gi, '')
+        .replace(/<link[\s\S]*?>/gi, '')
+        .replace(/<meta[\s\S]*?>/gi, '');
+
+    body.innerHTML = htmlString;
+}
+
 
 //Procedure S
 function executeCommand(command) {
