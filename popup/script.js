@@ -1,5 +1,4 @@
 window.addEventListener("DOMContentLoaded", () => {
-
   // DOM Elements
   const recordingStatus = document.getElementById("recordingStatus");
 
@@ -10,7 +9,7 @@ window.addEventListener("DOMContentLoaded", () => {
     let tabs = await browser.tabs.query({ active: true, currentWindow: true });
     await browser.tabs.sendMessage(tabs[0].id, {
       key: "Hello from popup!",
-      value: "This is a test message from the popup script."
+      value: "This is a test message from the popup script.",
     });
   }
   // Helper: send a message to the active tab (supports browser and chrome APIs)
@@ -20,7 +19,7 @@ window.addEventListener("DOMContentLoaded", () => {
    */
   function sendToActiveTab(message) {
     // Use the global 'browser' object for Firefox extensions.
-    const api = browser || chrome;
+    const api = browser;
 
     if (!api || !api.tabs) {
       console.error(
@@ -91,9 +90,7 @@ window.addEventListener("DOMContentLoaded", () => {
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
         recordingStatus.textContent = "Stopping recording...";
-      }
-      else {
-
+      } else {
         const svg = document.querySelector("#popup-content svg");
         if (!svg) return;
 
@@ -112,7 +109,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
         try {
           // Request access to the user's microphone
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
 
           // Initialize MediaRecorder
           mediaRecorder = new MediaRecorder(stream);
@@ -137,6 +136,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
               console.log("--- Gemini Analysis Result ---");
               console.log(result);
+              sendToActiveTab(result);
               console.log("------------------------------");
 
               recordingStatus.textContent =
@@ -151,7 +151,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
           // Update UI to reflect recording state
           recordingStatus.textContent = "Recording...";
-
         } catch (err) {
           console.error("Error accessing microphone:", err);
           recordingStatus.textContent = "Error: Could not access microphone.";
@@ -159,22 +158,20 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  // Add handler to open mic permission page in a new tab
+  (() => {
+    const btn = document.getElementById("getPerms");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const url =
+        typeof browser !== "undefined" &&
+        browser.runtime &&
+        browser.runtime.getURL
+          ? browser.runtime.getURL("popup/mic_perms.html")
+          : "mic_perms.html";
+      // open in a new tab (popup UI can't directly trigger the browser permission prompt reliably)
+      window.open(url, "_blank");
+    });
+  })();
 });
-
-
-// Add handler to open mic permission page in a new tab
-(() => {
-  const btn = document.getElementById("getPerms");
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    const url =
-      typeof browser !== "undefined" &&
-      browser.runtime &&
-      browser.runtime.getURL
-        ? browser.runtime.getURL("popup/mic_perms.html")
-        : "mic_perms.html";
-    // open in a new tab (popup UI can't directly trigger the browser permission prompt reliably)
-    window.open(url, "_blank");
-  });
-})();
-

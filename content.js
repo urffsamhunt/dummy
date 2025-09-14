@@ -5,12 +5,11 @@ console.log("test");
 
 
 
-window.browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Executing command:", command);
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handles the request for HTML from the background script.
     if (message.action === "getPageHtml") {
         console.log("Background script requested HTML. Sending it now.");
-        sendResponse({ html: document });
+        sendResponse({ html: document.documentElement.outerHTML });
         return true; // Required for asynchronous responses.
     }
 
