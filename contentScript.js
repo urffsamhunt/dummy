@@ -1,5 +1,6 @@
 // Listens for messages from the background script.
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Executing command:", command);
     // Handles the request for HTML from the background script.
     if (message.action === "getPageHtml") {
         console.log("Background script requested HTML. Sending it now.");
@@ -8,12 +9,21 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true; // Required for asynchronous responses.
     }
 
+    // If the popup wrapped the backend result as { key: 'ai_result', value: result }
+    // then execute the inner result as a command object.
+    if (message.key === 'ai_result' && message.value) {
+        console.log('Received AI result wrapper - executing inner command:', message.value);
+        executeCommand(message.value);
+        return;
+    }
+
     // Handles the commands to be executed
     if (message.key) {
         console.log("Received AI command to execute:", message);
         executeCommand(message);
     }
 });
+
 
 function parseAndSanitize(dom) {
 
@@ -31,8 +41,9 @@ function parseAndSanitize(dom) {
 
 
 }
-//Procedure Selector
+//Procedure S
 function executeCommand(command) {
+    console.log("Executing command:", command);
     const { key, value } = command;
     switch (key) {
         case 'click': handleClick(value); break;
