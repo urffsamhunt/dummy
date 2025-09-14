@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "wav": "^1.0.2"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.24.1",
