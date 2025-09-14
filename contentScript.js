@@ -41,68 +41,54 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 function parseAndSanitize(dom) {
-  // Select all <a> elements that have an <h3> as a direct child
-  const nodes = dom.querySelectorAll("a:has(> h3)");
+    // Select all <a> elements that have an <h3> as a direct child
+    const nodes = dom.querySelectorAll('a:has(> h3)');
 
-  let htmlString = "";
-  nodes.forEach((node) => {
-    htmlString += node.outerHTML;
-  });
+    let htmlString = '';
+    nodes.forEach(node => {
+        htmlString += node.outerHTML;
+    });
 
-  return htmlString; // optionally return the concatenated HTML string
+    return htmlString; // optionally return the concatenated HTML string
 }
 
 function parseAndSanitizePage(dommy) {
-  const nodes = dommy.querySelector(body);
-  let htmlString = nodes.innerHTML;
+    const nodes = dommy.querySelector(body);
+    let htmlString = nodes.innerHTML;
 
-  htmlString = htmlString
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
-    .replace(/<object[\s\S]*?<\/object>/gi, "")
-    .replace(/<embed[\s\S]*?<\/embed>/gi, "")
-    .replace(/<svg[\s\S]*?<\/svg>/gi, "")
-    .replace(/<g[\s\S]*?<\/g>/gi, "")
-    .replace(/<path[\s\S]*?<\/path>/gi, "")
-    .replace(/<header[\s\S]*?<\/header>/gi, "")
-    .replace(/<link[\s\S]*?>/gi, "")
-    .replace(/<meta[\s\S]*?>/gi, "");
+    htmlString = htmlString
+        .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+        .replace(/<object[\s\S]*?<\/object>/gi, '')
+        .replace(/<embed[\s\S]*?<\/embed>/gi, '')
+        .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+        .replace(/<g[\s\S]*?<\/g>/gi, '')
+        .replace(/<path[\s\S]*?<\/path>/gi, '')
+        .replace(/<header[\s\S]*?<\/header>/gi, '')
+        .replace(/<link[\s\S]*?>/gi, '')
+        .replace(/<meta[\s\S]*?>/gi, '');
 
-  body.innerHTML = htmlString;
+    body.innerHTML = htmlString;
 }
+
 
 //Procedure S
 function executeCommand(command) {
-  console.log("Executing command:", command);
-
-  const { key, value } = command;
-  switch (key) {
-    case "click":
-      handleClick(value);
-      break;
-    case "hover":
-      handleHover(value);
-      break;
-    case "input":
-      handleInput(value[0], value[1]);
-      break;
-    case "back":
-      handleBack(value);
-      break;
-    case "forward":
-      handleForward(value);
-      break;
-    case "search":
-      handleSearch(value);
-      break;
-    case "bookmark":
-      handleBookmark();
-      break;
-    default:
-      console.error(`Unknown command key: "${key}"`);
-  }
+    console.log("Executing command:", command);
+    document.getElementById("STT").innerText = JSON.stringify(value);
+    const { key, value } = command;
+    switch (key) {
+        case 'click': handleClick(value); break;
+        case 'hover': handleHover(value); break;
+        case 'input': handleInput(value[0], value[1]); break;
+        case 'back': handleBack(value); break;
+        case 'forward': handleForward(value); break;
+        case 'search': handleSearch(value); break;
+        case 'bookmark': handleBookmark(); break;
+        default: console.error(`Unknown command key: "${key}"`);
+    }
 }
 
 // --- Helper Functions to Find Elements on the Page ---
