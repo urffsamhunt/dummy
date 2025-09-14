@@ -5,6 +5,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "getPageHtml") {
         console.log("Background script requested HTML. Sending it now.");
         sendResponse({ html: document });
+        parseAndSanitize(document);
         return true; // Required for asynchronous responses.
     }
 
@@ -23,14 +24,31 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-// Procedure Selector
+
+function parseAndSanitize(dom) {
+
+    const mainContentDiv = dom.getElementById('rso');
+    const nodes = mainContentDiv.querySelectorAll(".V9tjod");
+    nodes.forEach(node => {
+        const imgs = node.querySelectorAll('img');
+        imgs.forEach(img => img.remove());
+    });
+    let htmlString = '';
+    nodes.forEach(node => {
+        htmlString += node.outerHTML;
+    });
+
+
+
+}
+//Procedure S
 function executeCommand(command) {
     console.log("Executing command:", command);
     const { key, value } = command;
     switch (key) {
         case 'click': handleClick(value); break;
         case 'hover': handleHover(value); break;
-        case 'input': handleInput(value[0], value[1]); break; 
+        case 'input': handleInput(value[0], value[1]); break;
         case 'back': handleBack(value); break;
         case 'forward': handleForward(value); break;
         case 'search': handleSearch(value); break;

@@ -1,7 +1,6 @@
 window.addEventListener("DOMContentLoaded", () => {
+
   // DOM Elements
-  const recordButton = document.getElementById("recordButton");
-  const stopButton = document.getElementById("stopButton");
   const recordingStatus = document.getElementById("recordingStatus");
 
   // MediaRecorder variables
@@ -84,95 +83,84 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Event Listener for Record Button ---
-  recordButton.addEventListener("click", async () => {
-    try {
-      // Request access to the user's microphone
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  // --- Event Listener for Ctrl+B to start recording or stop recording ---
+  document.addEventListener("keydown", async (event) => {
+    if (event.code === "KeyB" && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
 
-      // Initialize MediaRecorder
-      mediaRecorder = new MediaRecorder(stream);
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        recordingStatus.textContent = "Stopping recording...";
+      }
+      else {
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunks.push(event.data);
-      };
+        const svg = document.querySelector("#popup-content svg");
+        if (!svg) return;
 
-      mediaRecorder.onstop = async () => {
-        // Combine all collected audio chunks into a single Blob
-        const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        const audioFile = new File([audioBlob], "recording.webm", {
-          type: "audio/webm",
-        });
-
-        audioChunks = [];
+        svg.animate(
+          [
+            { transform: "scale(1)" },
+            { transform: "scale(1.2)" },
+            { transform: "scale(1)" },
+          ],
+          {
+            duration: 3000,
+            iterations: Infinity,
+            easing: "linear",
+          }
+        );
 
         try {
-          recordingStatus.textContent = "Analyzing audio...";
-          console.log("Recording stopped. Sending audio to backend...");
+          // Request access to the user's microphone
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-          const result = await analyzeAudio(audioFile);
+          // Initialize MediaRecorder
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
 
-          console.log("--- Gemini Analysis Result ---");
-          console.log(result);
-          console.log("------------------------------");
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
 
-          // Ensure the message has a 'key' property so contentScript will invoke executeCommand
-          const messageToSend =
-            result && result.key ? result : { key: "ai_result", value: result };
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+            const audioFile = new File([audioBlob], "recording.webm", {
+              type: "audio/webm",
+            });
 
-          console.log(
-            "Sending command/message to content script:",
-            messageToSend
-          );
-          sendToActiveTab(messageToSend);
+            audioChunks = [];
 
-          recordingStatus.textContent =
-            "Analysis complete. Output is in the console and sent to page.";
-        } catch (error) {
-          console.error("Failed to get analysis from backend:", error);
-          recordingStatus.textContent = `Analysis failed: ${error.message}`;
+            try {
+              recordingStatus.textContent = "Analyzing audio...";
+              console.log("Recording stopped. Sending audio to backend...");
+              const result = await analyzeAudio(audioFile);
+
+              console.log("--- Gemini Analysis Result ---");
+              console.log(result);
+              console.log("------------------------------");
+
+              recordingStatus.textContent =
+                "Analysis complete. Output is in the console.";
+            } catch (error) {
+              console.error("Failed to get analysis from backend:", error);
+              recordingStatus.textContent = `Analysis failed: ${error.message}`;
+            }
+          };
+
+          mediaRecorder.start();
+
+          // Update UI to reflect recording state
+          recordingStatus.textContent = "Recording...";
+
+        } catch (err) {
+          console.error("Error accessing microphone:", err);
+          recordingStatus.textContent = "Error: Could not access microphone.";
         }
-      };
-
-      mediaRecorder.start();
-
-      // Update UI to reflect recording state
-      recordingStatus.textContent = "Recording...";
-      recordButton.disabled = true;
-      stopButton.disabled = false;
-    } catch (err) {
-      // Handle errors, like if the user denies microphone permission
-      console.error("Error accessing microphone:", err);
-      recordingStatus.textContent = "Error: Could not access microphone.";
+      }
     }
   });
-
-  // --- Event Listener for Stop Button ---
-  stopButton.addEventListener("click", () => {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.stop();
-      recordingStatus.textContent = "Stopping recording...";
-      recordButton.disabled = false;
-      stopButton.disabled = true;
-    }
-  });
-
-  const svg = document.querySelector("#popup-content svg");
-  if (!svg) return;
-
-  svg.animate(
-    [
-      { transform: "scale(1)" },
-      { transform: "scale(1.2)" },
-      { transform: "scale(1)" },
-    ],
-    {
-      duration: 3000,
-      iterations: Infinity,
-      easing: "linear",
-    }
-  );
 });
+
 
 // Add handler to open mic permission page in a new tab
 (() => {
@@ -190,21 +178,3 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 })();
 
-function parseAndSanitize() {
-  const input = document.getElementById("htmlInput").value;
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(input, "text/html");
-  let bodyContent = doc.body.innerHTML;
-
-  bodyContent = bodyContent
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
-    .replace(/<object[\s\S]*?<\/object>/gi, "")
-    .replace(/<embed[\s\S]*?<\/embed>/gi, "")
-    .replace(/<link[\s\S]*?>/gi, "")
-    .replace(/<meta[\s\S]*?>/gi, "");
-
-  document.getElementById("result").textContent = bodyContent;
-}
