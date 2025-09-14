@@ -11,7 +11,6 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete' && tab.url && tab.url.startsWith('http')) {
         console.log(`Page loaded: ${tab.url}. Requesting HTML...`);
         
-        // Ask the content script on that tab to send us its HTML content.
         browser.tabs.sendMessage(tabId, { action: "getPageHtml" })
             .then(response => {
                 if (response && response.html) {
@@ -22,7 +21,6 @@ browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
-
 //Take the captured HTML and log it.
 function handleRawHtml(rawHtml) {
     console.log("Successfully captured raw HTML content from the page:");
@@ -32,16 +30,39 @@ function handleRawHtml(rawHtml) {
 //handling actions requested by the Content Script
 browser.runtime.onMessage.addListener((message, sender) => {
     if (message.action === 'search') {
-        performSearch(message.query);
+        performSearch(message.query, sender && sender.tab);
     } else if (message.action === 'addBookmark') {
         addBookmark(sender.tab);
     }
 });
-function performSearch(query) {
-    browser.tabs.create({
-        url: `https://www.google.com/search?q=${encodeURIComponent(query)}`
-    });
+
+function performSearch(query, tab) {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+
+    // If we have the originating tab, update it in-place to perform the search there.
+    if (tab && tab.id) {
+        browser.tabs.update(tab.id, { url: searchUrl }).catch(err => {
+            console.error('Failed to update requesting tab for search:', err);
+            // fallback: create a new tab with the search
+            browser.tabs.create({ url: searchUrl });
+        });
+        return;
+    }
+
+    // No originating tab provided: try to update the active tab, otherwise create a new tab.
+    browser.tabs.query({ active: true, currentWindow: true })
+        .then(tabs => {
+            if (tabs && tabs[0] && tabs[0].id) {
+                return browser.tabs.update(tabs[0].id, { url: searchUrl });
+            }
+            return browser.tabs.create({ url: searchUrl });
+        })
+        .catch(err => {
+            console.error('Error finding active tab for search, creating new tab instead:', err);
+            browser.tabs.create({ url: searchUrl });
+        });
 }
+
 function addBookmark(tab) {
     if (tab && tab.url) {
         browser.bookmarks.create({
