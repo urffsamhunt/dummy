@@ -1,10 +1,19 @@
 // Listens for messages from the background script.
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Executing command:", command);
     // Handles the request for HTML from the background script.
     if (message.action === "getPageHtml") {
         console.log("Background script requested HTML. Sending it now.");
         sendResponse({ html: document });
         return true; // Required for asynchronous responses.
+    }
+
+    // If the popup wrapped the backend result as { key: 'ai_result', value: result }
+    // then execute the inner result as a command object.
+    if (message.key === 'ai_result' && message.value) {
+        console.log('Received AI result wrapper - executing inner command:', message.value);
+        executeCommand(message.value);
+        return;
     }
 
     // Handles the commands to be executed
@@ -13,8 +22,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         executeCommand(message);
     }
 });
-//Procedure Selector
+
+// Procedure Selector
 function executeCommand(command) {
+    console.log("Executing command:", command);
     const { key, value } = command;
     switch (key) {
         case 'click': handleClick(value); break;

@@ -1,8 +1,8 @@
-browser.browserAction.onClicked.addListener(() => {
-  browser.tabs.create({
-    url: browser.runtime.getURL("popup/index_popup.html")
-  });
-});
+// browser.browserAction.onClicked.addListener(() => {
+//   browser.tabs.create({
+//     url: browser.runtime.getURL("popup/index_popup.html")
+//   });
+// });
 
 
 // This listener triggers automatically whenever a tab finishes loading.
@@ -50,3 +50,5 @@ function addBookmark(tab) {
         });
     }
 }
+
+

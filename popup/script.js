@@ -7,6 +7,51 @@ window.addEventListener("DOMContentLoaded", () => {
   // MediaRecorder variables
   let mediaRecorder;
   let audioChunks = [];
+  async function sendMsg(msg) {
+    let tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    await browser.tabs.sendMessage(tabs[0].id, {
+      key: "Hello from popup!",
+      value: "This is a test message from the popup script."
+    });
+  }
+  // Helper: send a message to the active tab (supports browser and chrome APIs)
+  /**
+   * Sends a message to the content script of the active tab.
+   * @param {object} message The message payload to send.
+   */
+  function sendToActiveTab(message) {
+    // Use the global 'browser' object for Firefox extensions.
+    const api = browser || chrome;
+
+    if (!api || !api.tabs) {
+      console.error(
+        "tabs API not available. This code must run in an extension context."
+      );
+      return;
+    }
+
+    // Use the modern promise-based API.
+    // This is the correct and standard way for Firefox.
+    api.tabs
+      .query({ active: true, currentWindow: true })
+      .then((tabs) => {
+        // Check if an active tab was found.
+        if (!tabs || tabs.length === 0) {
+          console.warn("No active tab found to send message to.");
+          return;
+        }
+        console.log(browser.tabs);
+
+        // Send the message to the first tab in the array (the active tab).
+        return window.browser.tabs.sendMessage(tabs[0].id, message);
+      })
+      .then((response) => {
+        // This block runs if the content script sent a response back.
+        if (response) {
+          console.log("Message sent successfully. Response:", response);
+        }
+      });
+  }
 
   /**
    * Sends the audio file to the backend for analysis.
@@ -71,8 +116,18 @@ window.addEventListener("DOMContentLoaded", () => {
           console.log(result);
           console.log("------------------------------");
 
+          // Ensure the message has a 'key' property so contentScript will invoke executeCommand
+          const messageToSend =
+            result && result.key ? result : { key: "ai_result", value: result };
+
+          console.log(
+            "Sending command/message to content script:",
+            messageToSend
+          );
+          sendToActiveTab(messageToSend);
+
           recordingStatus.textContent =
-            "Analysis complete. Output is in the console.";
+            "Analysis complete. Output is in the console and sent to page.";
         } catch (error) {
           console.error("Failed to get analysis from backend:", error);
           recordingStatus.textContent = `Analysis failed: ${error.message}`;
@@ -118,6 +173,22 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
 });
+
+// Add handler to open mic permission page in a new tab
+(() => {
+  const btn = document.getElementById("getPerms");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    const url =
+      typeof browser !== "undefined" &&
+      browser.runtime &&
+      browser.runtime.getURL
+        ? browser.runtime.getURL("popup/mic_perms.html")
+        : "mic_perms.html";
+    // open in a new tab (popup UI can't directly trigger the browser permission prompt reliably)
+    window.open(url, "_blank");
+  });
+})();
 
 function parseAndSanitize() {
   const input = document.getElementById("htmlInput").value;

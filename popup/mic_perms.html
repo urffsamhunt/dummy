@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>Microphone Permission</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: system-ui, "DM Sans", sans-serif; padding: 16px; color: #111; }
+      button { padding: 8px 12px; margin-top: 8px; }
+      #permStatus { margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <h2>Grant Microphone Access</h2>
+    <p>Click the button below to trigger the browser permission prompt for the microphone.</p>
+    <button id="requestMic">Request Microphone Permission</button>
+    <div id="permStatus">Waiting...</div>
+
+    <script src="mic_perms.js"></script>
+  </body>
+</html>
