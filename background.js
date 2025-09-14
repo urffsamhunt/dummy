@@ -7,7 +7,8 @@
 // --- State Management ---
 let activeTabId = null;
 let activeTabSanitizedHtml = '';
-const SERVER_URL = 'http://localhost:3000'; // IMPORTANT: Replace with the server's URL and port. But it has to be replaced by our deployed server URL in production.
+const SERVER_URL = 'http://localhost:3000'; // IMPORTANT: Replace with the server's URL and port. 
+// But it has to be later replaced by our deployed server URL in production.
 
 // When a tab finishes loading, get its sanitized HTML.
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -120,18 +121,22 @@ async function speakText(text) {
 //handling actions requested by the Content Script
 browser.runtime.onMessage.addListener((message, sender) => {
     if (message.action === 'search') {
-        performSearch(message.query);
+        performSearch(message.query, sender.tab);
     } else if (message.action === 'addBookmark') {
         addBookmark(sender.tab);
     }
 });
-function performSearch(query) {
-    browser.tabs.create({
-        url: `https://www.google.com/search?q=${encodeURIComponent(query)}`
-    });
+function performSearch(query, tab) {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    // For a better user experience, perform the search in the user's current tab.
+    if (tab && tab.id) {
+        browser.tabs.update(tab.id, { url: searchUrl });
+    } else {
+        browser.tabs.create({ url: searchUrl }); // Fallback to a new tab
+    }
 }
 function addBookmark(tab) {
-    if (tab && tab.url) {
+    if (tab && tab.url && tab.title) {
         browser.bookmarks.create({
             title: tab.title || 'New Bookmark',
             url: tab.url
@@ -139,4 +144,10 @@ function addBookmark(tab) {
     }
 }
 
-
+// Initialize the active tab ID when the extension starts.
+browser.tabs.query({ active: true, currentWindow: true }).then(tabs => {
+    if (tabs[0]) {
+        activeTabId = tabs[0].id;
+        requestSanitizedHtml(activeTabId);
+    }
+});
