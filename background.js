@@ -39,7 +39,10 @@ function requestSanitizedHtml(tabId) {
         .catch(error => console.error(`Could not get HTML from content script for tab ${tabId}: ${error}`));
 }
         
+<<<<<<< HEAD
 /*        // Ask the content script on that tab to send us its HTML content.
+=======
+>>>>>>> 70e1aab686b724bb60b57e04dbf22a2ca9be0c47
         browser.tabs.sendMessage(tabId, { action: "getPageHtml" })
             .then(response => {
                 if (response && response.html) {
@@ -121,11 +124,16 @@ async function speakText(text) {
 //handling actions requested by the Content Script
 browser.runtime.onMessage.addListener((message, sender) => {
     if (message.action === 'search') {
+<<<<<<< HEAD
         performSearch(message.query, sender.tab);
+=======
+        performSearch(message.query, sender && sender.tab);
+>>>>>>> 70e1aab686b724bb60b57e04dbf22a2ca9be0c47
     } else if (message.action === 'addBookmark') {
         addBookmark(sender.tab);
     }
 });
+<<<<<<< HEAD
 function performSearch(query, tab) {
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
     // For a better user experience, perform the search in the user's current tab.
@@ -134,7 +142,36 @@ function performSearch(query, tab) {
     } else {
         browser.tabs.create({ url: searchUrl }); // Fallback to a new tab
     }
+=======
+
+function performSearch(query, tab) {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+
+    // If we have the originating tab, update it in-place to perform the search there.
+    if (tab && tab.id) {
+        browser.tabs.update(tab.id, { url: searchUrl }).catch(err => {
+            console.error('Failed to update requesting tab for search:', err);
+            // fallback: create a new tab with the search
+            browser.tabs.create({ url: searchUrl });
+        });
+        return;
+    }
+
+    // No originating tab provided: try to update the active tab, otherwise create a new tab.
+    browser.tabs.query({ active: true, currentWindow: true })
+        .then(tabs => {
+            if (tabs && tabs[0] && tabs[0].id) {
+                return browser.tabs.update(tabs[0].id, { url: searchUrl });
+            }
+            return browser.tabs.create({ url: searchUrl });
+        })
+        .catch(err => {
+            console.error('Error finding active tab for search, creating new tab instead:', err);
+            browser.tabs.create({ url: searchUrl });
+        });
+>>>>>>> 70e1aab686b724bb60b57e04dbf22a2ca9be0c47
 }
+
 function addBookmark(tab) {
     if (tab && tab.url && tab.title) {
         browser.bookmarks.create({
