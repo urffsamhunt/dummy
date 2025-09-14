@@ -22,7 +22,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-
+/*
 function parseAndSanitize(dom) {
   // Select all <a> elements that have an <h3> as a direct child
   const nodes = dom.querySelectorAll('a:has(> h3)');
@@ -33,6 +33,37 @@ function parseAndSanitize(dom) {
   });
 
   return htmlString; // optionally return the concatenated HTML string
+}
+*/ 
+
+/**
+ * Sanitizes the page's body to create a clean, simple HTML string for the AI.
+ * This focuses on interactive elements and text content, removing clutter.
+ * @param {HTMLElement} body - The document.body element.
+ * @returns {string} - A simplified HTML string representing the page content.
+ */
+function parseAndSanitizePage(body) {
+    if (!body) return "";
+    
+    // Create a clone of the body to avoid modifying the actual page.
+    const clone = body.cloneNode(true);
+
+    // Remove tags that are usually irrelevant for navigation and clutter the context.
+    const tagsToRemove = ['script', 'style', 'noscript', 'iframe', 'svg', 'header', 'footer', 'nav', 'img', 'link', 'meta'];
+    clone.querySelectorAll(tagsToRemove.join(',')).forEach(el => el.remove());
+    
+    // Remove hidden elements
+    clone.querySelectorAll('[style*="display: none"], [hidden]').forEach(el => el.remove());
+
+    // Reduce long text to avoid exceeding token limits
+    clone.querySelectorAll('p, div, span').forEach(el => {
+        if (el.textContent.length > 200) {
+            el.textContent = el.textContent.substring(0, 200) + '...';
+        }
+    });
+
+    // Return the cleaned HTML as a string
+    return clone.innerHTML.replace(/\s{2,}/g, ' ').trim(); // Collapse whitespace
 }
 
 //Procedure S
