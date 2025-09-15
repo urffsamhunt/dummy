@@ -8,7 +8,7 @@
   "icons": {
     "48": "icons/image.png"
   },
-  "permissions": ["activeTab", "tabs", "webRequest", "<all_urls>"],
+  "permissions": ["activeTab", "tabs", "webRequest", "<all_urls>", "storage"],
 
   "browser_action": {
     "default_icon": "icons/image.png",

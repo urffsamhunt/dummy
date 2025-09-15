@@ -5,13 +5,39 @@ window.addEventListener("DOMContentLoaded", () => {
   // MediaRecorder variables
   let mediaRecorder;
   let audioChunks = [];
-  async function sendMsg(msg) {
-    let tabs = await browser.tabs.query({ active: true, currentWindow: true });
-    await browser.tabs.sendMessage(tabs[0].id, {
-      key: "Hello from popup!",
-      value: "This is a test message from the popup script.",
-    });
+
+  // Perform Search in the current tab or a new tab
+  function performSearch(query, tab) {
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+      query
+    )}`;
+    if (tab && tab.id) {
+      browser.tabs.update(tab.id, { url: searchUrl }).catch((err) => {
+        console.error("Failed to update requesting tab for search:", err);
+        // fallback: create a new tab with the search
+        browser.tabs.create({ url: searchUrl });
+      });
+      return;
+    }
+
+    browser.tabs
+      .query({ active: true, currentWindow: true })
+      .then((tabs) => {
+        if (tabs && tabs[0] && tabs[0].id) {
+          return browser.tabs.update(tabs[0].id, { url: searchUrl });
+        }
+        return browser.tabs.create({ url: searchUrl });
+      })
+      .catch((err) => {
+        console.error(
+          "Error finding active tab for search, creating new tab instead:",
+          err
+        );
+        browser.tabs.create({ url: searchUrl });
+      });
   }
+
+  // -----------------------------------------------------------------------------
   // Helper: send a message to the active tab (supports browser and chrome APIs)
   /**
    * Sends a message to the content script of the active tab.
@@ -19,6 +45,13 @@ window.addEventListener("DOMContentLoaded", () => {
    */
   function sendToActiveTab(message) {
     // Use the global 'browser' object for Firefox extensions.
+    document.getElementById("STT").innerText = JSON.stringify(message.value);
+
+    browser.runtime.sendMessage({ action: "setVar", key: "lastCommand", value: message }).catch((err) => {
+      console.error("Error setting lastCommand in storage:", err);
+    });
+
+
     const api = browser;
 
     if (!api || !api.tabs) {
@@ -40,8 +73,12 @@ window.addEventListener("DOMContentLoaded", () => {
         }
         console.log(browser.tabs);
 
+        if (message.key === "search") {
+          performSearch(message.value, tabs[0]);
+          return;
+        }
         // Send the message to the first tab in the array (the active tab).
-        return browser.tabs.sendMessage(tabs[0].id, message );
+        else return browser.tabs.sendMessage(tabs[0].id, message);
       })
       .then((response) => {
         // This block runs if the content script sent a response back.
