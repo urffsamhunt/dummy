@@ -1,102 +1,142 @@
-# Gemini API Express Server
+# VisionPair: The AI-Powered Voice Navigator
 
-This project is a simple Node.js Express server that provides two API endpoints for interacting with the Google Gemini API.
+**Navigate the web with the power of your voice. VisionPair is an intelligent browser extension that provides a conversational interface to the internet, specifically designed for visually impaired users.**
 
-## Endpoints
+## About The Project
 
-1. **`POST /analyze-audio`**: Accepts an audio file, analyzes it with a system prompt for context, and returns a structured JSON object containing the analysis (e.g., summary, sentiment, action items).
+The modern web is overwhelmingly visual, creating significant barriers for users with visual impairments. Traditional screen readers are powerful but can be linear and cumbersome on complex, dynamic websites.
+
+Aura bridges this gap by acting as an AI co-pilot. It uses advanced Large Language Models (LLMs) to understand what you want to do, interacts with the website on your behalf, and tells you what happened in a clear, natural voice. It turns the task of navigating a cluttered webpage into a simple conversation.
+
+## Key Features
+
+- **Voice-First Navigation:** Control your browser entirely through natural language commands.
     
-2. **`POST /generate-json`**: Accepts a text prompt and returns a structured JSON object based on the content of the prompt (e.g., extracting recipe details).
+- **Intelligent Actions:** Understands context. You can say "find the search bar" or "add this to my cart" instead of tabbing through dozens of elements.
+    
+- **On-Demand Summarization:** Ask Aura to summarize a long article, describe the images on a page, or list the main headlines.
+    
+- **Reliable Control:** Translates your intent into deterministic DOM actions, ensuring that commands work predictably.
+    
+- **Real-time Audio Feedback:** Provides instant, conversational feedback for every action you take.
     
 
-## Prerequisites
+## How It Works
 
-- Node.js (v18 or later recommended)
+Aura operates on a simple yet powerful loop:
+
+1. **Understand:** The user's voice command is captured and sent to an LLM to identify their specific **intent** (the operation) and **sentiment**.
     
-- npm (comes with Node.js)
+2. **Act:** This intent is mapped to a **deterministic action** using the browser's DOM API (e.g., executing a click or finding an element) to ensure reliable execution.
     
-- A Google Gemini API Key. You can get one from [Google AI Studio](https://aistudio.google.com/app/apikey "null").
+3. **Parse:** The extension retrieves the result of this action from the web page, then **sanitizes and parses** it to extract only the clean, relevant data.
+    
+4. **Elaborate:** This clean data is sent **back to the LLM**, which generates a context-aware, natural language summary based on the retrieved information.
+    
+5. **Respond:** The LLM's helpful text response is converted to speech and played back to the user, completing the interaction.
     
 
-## Setup and Installation
+## Getting Started
 
-1. **Clone the repository or save the files:** Download `server.js` and `package.json` into a new project folder.
+### For Users
+
+The easiest way to get started is to install Aura from your browser's extension store.
+
+- [Install for Google Chrome](https://www.google.com/search?q=link-to-chrome-store) (Coming Soon!)
     
-2. **Create a `.env` file:** In the root of your project directory, create a new file named `.env` and add your Gemini API key to it:
+- [Install for Mozilla Firefox](https://www.google.com/search?q=link-to-firefox-store) (Coming Soon!)
+    
+
+Once installed, pin the extension to your toolbar and grant it microphone permissions when prompted.
+
+### For Developers
+
+To get a local copy up and running for development and testing, follow these steps.
+
+**Prerequisites:**
+
+- Node.js (v18 or later)
+    
+- npm or yarn
+    
+
+**Installation:**
+
+1. Clone the repository:
+    
+    Bash
     
     ```
-    GEMINI_API_KEY="YOUR_GEMINI_API_KEY_HERE"
+    git clone https://github.com/your-username/aura.git
     ```
     
-3. **Install dependencies:** Open your terminal in the project directory and run:
+2. Navigate to the project directory:
+    
+    Bash
+    
+    ```
+    cd visionpair
+    ```
+    
+3. Install NPM packages:
+    
+    Bash
     
     ```
     npm install
     ```
     
-4. **Start the server:**
+4. Build the extension:
+    
+    Bash
     
     ```
-    npm start
+    npm run build
     ```
     
-    The server should now be running on `http://localhost:3000`.
+5. Load the extension in your browser (e.g., in Chrome, go to `chrome://extensions`, enable "Developer mode", and "Load unpacked" the `dist` directory).
     
 
-## How to Test the Endpoints
+## Usage
 
-You can use a tool like `curl` or Postman to test the endpoints.
+Simply activate the extension (e.g., via a keyboard shortcut or by clicking its icon) and speak your command.
 
-### 1. Test `/analyze-audio`
+**Example Commands:**
 
-Find an audio file on your computer (e.g., an `.mp3` or `.wav` file) and run the following `curl` command in your terminal, replacing `path/to/your/audio.mp3` with the actual path to your file.
+- _"Read the main headlines on this page."_
+    
+- _"Find the search bar and type 'latest news from India'."_
+    
+- _"Click on the link about the monsoon season."_
+    
+- _"Summarize this article for me."_
+    
+- _"What are the items in my shopping cart?"_
+    
 
-```
-curl -X POST http://localhost:3000/analyze-audio \
-  -F "audio=@path/to/your/audio.mp3"
-```
+## Technology Stack
 
-**Expected Response:**
+- **Frontend:** JavaScript (ES6+), HTML5, CSS3
+    
+- **Browser API:** WebExtensions API
+    
+- **AI Services:**
+    
+    - **LLM:** OpenAI GPT API
+        
+    - **Speech-to-Text (STT):** Browser's built-in Web Speech API / Google Cloud Speech-to-Text
+        
+    - **Text-to-Speech (TTS):** Browser's built-in Web Speech API / Google Cloud Text-to-Speech
+        
+- **Build Tools:** Webpack, Babel
+    
 
-You should receive a JSON object similar to this:
+## Contributing
 
-```
-{
-    "summary": "The customer is calling to report an issue with their recent order where they received the wrong item.",
-    "sentiment": "negative",
-    "action_items": [
-        "Apologize to the customer for the inconvenience.",
-        "Initiate a return for the incorrect item.",
-        "Ship the correct item with expedited shipping."
-    ]
-}
-```
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-### 2. Test `/generate-json`
+Please refer to the `CONTRIBUTING.md` file for our contribution guidelines.
 
-Run the following `curl` command in your terminal. The System Prompts are not calibrated, make sure you fix it before testing, or the endpoint will output some other random format.
+## License
 
-```
-curl -X POST http://localhost:3000/generate-json \
-  -H "Content-Type: application/json" \
-  -d '{
-        "prompt": "Create a simple recipe for chocolate chip cookies. It should make 24 cookies and include flour, sugar, butter, and chocolate chips."
-      }'
-```
-
-**Expected Response:**
-
-You should receive a random JSON object structured like this:
-
-```
-{
-    "recipeName": "Simple Chocolate Chip Cookies",
-    "ingredients": [
-        "1 cup all-purpose flour",
-        "1/2 cup granulated sugar",
-        "1/2 cup unsalted butter, softened",
-        "1 cup chocolate chips"
-    ],
-    "servings": 24
-}
-```
+Distributed under the MIT License. See `LICENSE` for more information.
